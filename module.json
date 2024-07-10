@@ -1,20 +1,20 @@
 {
-  "id": "module",
-  "title": "New Module",
-  "description": "",
+  "id": "pf2e-roll-manager",
+  "title": "Pathfinder 2E Roll Manager",
+  "description": "This module makes setting up DC checks easier for groups of players and busy GMs.",
   "version": "#{VERSION}#",
   "library": "false",
   "manifestPlusVersion": "1.2.0",
   "compatibility": {
-    "minimum": 10,
-    "verified": 10,
-    "maximum": 11
+    "minimum": 11,
+    "verified": 12,
+    "maximum": 12
   },
   "authors": [
     {
-      "name": "The League of Extraordinary FVTT Developers",
-      "url": "https://github.com/League-of-Foundry-Developers",
-      "discord": "discordID#0001"
+      "name": "Ingram Blakelock (Mythica Machina)",
+      "url": "https://mythicamachina.com/",
+      "discord": "garsondee"
     }
   ],
   "relationships": {
@@ -47,5 +47,6 @@
       "type": "icon",
       "url": "https://avatars2.githubusercontent.com/u/71292812?s=400&u=ccdb4eeb7abf551ca8f314e5a9bfd0479a4d3d41&v=4"
     }
-  ]
+  ],
+  "socket": true
 }
