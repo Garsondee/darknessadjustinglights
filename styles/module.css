@@ -1,0 +1,148 @@
+/* Apply styles for skill and character buttons */
+.skill-button,
+.character-select-button {
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    margin: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Apply the .selected class uniformly */
+.skill-button.selected,
+.character-select-button.selected {
+    background-color: blue;
+    color: white;
+}
+
+/* Extra specificity if needed */
+.character-select-button.selected {
+    background-color: blue;
+    color: white;
+}
+
+/* Ensure the form inside the dialog box stretches with resizing */
+.dialog form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+
+.skill-buttons-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.skill-buttons-grid .skill-button {
+    box-sizing: border-box;
+    padding: 0.2rem;
+    text-align: center;
+}
+
+/* Ensure buttons are consistent in height */
+.skill-button {
+    height: 32px;
+    width: auto;
+}
+
+
+.skill-buttons-grid, .character-selection-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.dc-adjustment-buttons, .standard-dc-buttons {
+    flex-wrap: nowrap !important;
+    width: 610px;
+}
+
+.dc-adjustment-buttons {
+}
+
+.skill-button, .dc-adjustment-button, .standard-dc-button, .character-select-button {
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.skill-button.selected, .dc-adjustment-button.selected, .standard-dc-button.selected, .character-select-button.selected {
+    background-color: #3ab7f4;
+}
+
+.skill-button:hover, .dc-adjustment-button:hover, .standard-dc-button:hover, .character-select-button:hover {
+    background-color: #6aafd1;
+}
+
+.dc-input-box {
+    text-align: center;
+}
+
+.kofi-donation {
+    text-align: center;
+}
+
+.flex-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.skill-buttons-row {
+    flex-direction: row;
+}
+
+.custom-tool-button {
+    background-color: #006400 !important; /* Dark green background */
+    color: white !important; /* White icon for contrast */
+}
+
+.custom-tool-button:hover {
+    background-color: #008000 !important; /* Slightly lighter green on hover */
+}
+
+.character-select-button {
+    width: 150px;
+    height: 180px;
+}
+
+.character-token-image {
+    border: 0;
+}
+
+.standard-dc-buttons flex-container {
+    justify-content: flex-end !important;
+}
+
+/* DC Input Box */
+.dc-input-box {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.dc-input-box label {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.dc-input-box input {
+    font-size: 1.5em;
+    font-weight: bold;
+    border: 3px solid #26902b;
+    background-color: #ffe5e5;
+    color: #000;
+    text-align: center;
+    width: 60px;
+    height: 60px;
+}
+
+.details-section {
+    padding-left: 5px;
+}
