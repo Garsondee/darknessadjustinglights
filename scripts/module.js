@@ -745,15 +745,19 @@ async function createActionDropdown({
 		render: (html) => {
 			restoreCollapsibleState();
 			const updateDC = (value) => {
-				value = Math.min(Math.max(value, 1), 60);
+				value = Math.min(Math.max(parseInt(value, 10), 1), 60);
 				html.find('#dc-slider-value').text(value);
 				html.find('#dc-slider').val(value);
 				html.find('#dc-input').val(value);
 			};
 			html.find('#dc-slider').on('input', (event) => updateDC(event.target.value));
 			html.find('#dc-input').on('change', (event) => updateDC(event.target.value));
-			html.find('.dc-adjustment-button').on('click', (event) => updateDC(event.target.dataset.dc));
-			html.find('.standard-dc-button').on('click', (event) => updateDC(event.target.dataset.dc));
+			html.find('.dc-adjustment-button').on('click', (event) => {
+				const adjustment = parseInt(event.currentTarget.dataset.dc, 10);
+				const currentDC = parseInt(html.find('#dc-slider').val(), 10);
+				updateDC(currentDC + adjustment);
+			});
+			html.find('.standard-dc-button').on('click', (event) => updateDC(parseInt(event.currentTarget.dataset.dc, 10)));
 			html.find('.skill-button').on('click', (event) => {
 				$(event.currentTarget).toggleClass('selected');
 			});

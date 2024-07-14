@@ -1,13 +1,13 @@
 {
   "id": "pf2e-roll-manager",
-  "title": "Pathfinder 2E Roll Manager",
+  "title": "PF2E Roll Manager",
   "description": "This module makes setting up DC checks easier for groups of players and busy GMs.",
-  "version": "#{VERSION}#",
+  "version": "1.55",
   "library": "false",
   "manifestPlusVersion": "1.2.0",
   "compatibility": {
     "minimum": 11,
-    "verified": 12,
+    "verified": 11,
     "maximum": 12
   },
   "authors": [
@@ -24,22 +24,12 @@
   "esmodules": [
     "scripts/module.js"
   ],
-  "scripts": [
-    "scripts/lib/lib.js"
-  ],
   "styles": [
     "styles/module.css"
   ],
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "languages/en.json"
-    }
-  ],
-  "url": "#{URL}#",
-  "manifest": "#{MANIFEST}#",
-  "download": "#{DOWNLOAD}#",
+  "url": "https://github.com/Garsondee/pf2e-roll-manager",
+  "manifest": "https://github.com/Garsondee/pf2e-roll-manager/releases/download/1.55/module.json",
+  "download": "https://github.com/Garsondee/pf2e-roll-manager/releases/download/1.55/module.zip",
   "license": "LICENSE",
   "readme": "README.md",
   "media": [
