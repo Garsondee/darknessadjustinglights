@@ -1,0 +1,377 @@
+Index: .github/dependabot.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.github/dependabot.yml b/.github/dependabot.yml
+new file mode 100644
+--- /dev/null	(date 1719177700403)
++++ b/.github/dependabot.yml	(date 1719177700403)
+@@ -0,0 +1,11 @@
++# This file controls the configuration for the "Dependabot" service, used to keep dependencies updated.
++# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
++# See the above link for the reason why "directory" is set to "/"
++version: 2
++updates:
++  # GitHub Actions
++  - package-ecosystem: "github-actions"
++    open-pull-requests-limit: 10
++    directory: "/"
++    schedule:
++      interval: "daily"
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1719177707956)
++++ b/.idea/.gitignore	(date 1719177707956)
+@@ -0,0 +1,5 @@
++# Default ignored files
++/shelf/
++/workspace.xml
++# Editor-based HTTP Client requests
++/httpRequests/
+Index: README.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/README.md b/README.md
+new file mode 100644
+--- /dev/null	(date 1720288690274)
++++ b/README.md	(date 1720288690274)
+@@ -0,0 +1,129 @@
++# Pathfinder 2nd Edition - Roll Manager
++
++![Image 1](https://imgur.com/rNW0p5x.png)
++
++![Image 2](https://imgur.com/umz79gi.png)
++
++![Image 3](https://imgur.com/m1bKzdS.png)
++
++![Image 4](https://imgur.com/4GOvB2g.png)
++
++
++## Introduction
++
++Welcome to the Pathfinder 2nd Edition - Roll Manager module for Foundry VTT! This module is designed to streamline the
++process of prompting players for skill or saving rolls during your Pathfinder 2e sessions. Say goodbye to fumbling
++through rulebooks or manually calculating rolls – with this module, you can effortlessly manage rolls and keep the game
++flowing smoothly.
++
++## Features
++
++- **Easy Prompting**: GMs can quickly prompt players for skill or saving rolls via a user-friendly dialog box.
++- **Custom Difficulty**: The GM can set the difficulty level for each roll, tailoring the challenge to fit the
++  situation.
++- **Seamless Integration**: The module seamlessly integrates into the Foundry VTT interface, enhancing your gameplay
++  experience.
++- **Flexibility**: GMs can select any number of skills or saving throws for players to roll, ensuring versatility in
++  gameplay.
++- **Flat Checks**: Support for flat checks is included, making it easy to handle special situations.
++- **Roll Summary**: After the roll, the module provides a summary of the outcome to the GM in a private message, keeping
++  important information easily accessible.
++- **Inline DC Checks**: In journals skill check boxes will have a green button added which automatically sets up the skill roll.
++
++## Installation
++
++To install the Pathfinder 2nd Edition - Roll Manager module, simply follow these steps:
++
++1. Download the module from the releases tab - you can use the JSON file to get Foundry to download the module.
++2. Unzip the downloaded file.
++3. Copy the folder named "pf2e-roll-manager" into the "modules" folder of your Foundry VTT installation.
++4. Launch Foundry VTT and activate the module in your Game Settings.
++
++## Usage
++
++Once the module is activated, using the Roll Manager is a breeze:
++
++1. As the GM, open the Roll Manager dialog box.
++2. Select the desired difficulty level for the roll.
++3. Choose the skills or saving throws you want players to roll.
++4. Click "Roll" and watch as the module prompts players to make their rolls.
++5. After the roll, receive a convenient summary of the outcome in a private message.
++
++## Development
++
++### Prerequisites
++
++In order to build this module, recent versions of `node` and `npm` are
++required. Most likely, using `yarn` also works, but only `npm` is officially
++supported. We recommend using the latest lts version of `node`. If you use `nvm`
++to manage your `node` versions, you can simply run
++
++```
++nvm install
++```
++
++in the project's root directory.
++
++You also need to install the project's dependencies. To do so, run
++
++```
++npm install
++```
++
++### Building
++
++You can build the project by running
++
++```
++npm run build
++```
++
++Alternatively, you can run
++
++```
++npm run build:watch
++```
++
++to watch for changes and automatically build as necessary.
++
++### Linking the built project to Foundry VTT
++
++In order to provide a fluent development experience, it is recommended to link
++the built module to your local Foundry VTT installation's data folder. In
++order to do so, first add a file called `foundryconfig.json` to the project root
++with the following content:
++
++```
++{
++  "dataPath": ["/absolute/path/to/your/FoundryVTT"]
++}
++```
++
++(if you are using Windows, make sure to use `\` as a path separator instead of
++`/`)
++
++Then run
++
++```
++npm run link-project
++```
++
++On Windows, creating symlinks requires administrator privileges, so
++unfortunately you need to run the above command in an administrator terminal for
++it to work.
++
++You can also link to multiple data folders by specifying multiple paths in the
++`dataPath` array.
++
++### Running the tests
++
++You can run the tests with the following command:
++
++```
++npm test
++```
++
++### Creating a release
++
++The workflow works basically the same as the workflow of the [League Basic JS Module Template], please follow the
++instructions given there.
+Index: .github/workflows/main.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+new file mode 100644
+--- /dev/null	(date 1719177700403)
++++ b/.github/workflows/main.yml	(date 1719177700403)
+@@ -0,0 +1,144 @@
++# GitHub Actions workflow for creating a new FoundryVTT module release.
++#
++# Useful References:
++#   - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
++#   - https://docs.github.com/en/actions/learn-github-actions/contexts
++#   - https://docs.github.com/en/actions/learn-github-actions/environment-variables
++#
++# Troubleshooting Checklist:
++#   - Is the module's manifest file valid JSON?
++#     You can test your manifest file using https://jsonlint.com/.
++#
++#   - Does the module's manifest have all the required keys?
++#     See https://foundryvtt.com/article/module-development/#manifest for more
++#     information.
++#
++#   - Are all the proper files and directories being included in the release's
++#     module archive ("module.zip")?
++#     Check that the correct files are being passed to the `zip` command run
++#     in the "Create Module Archive" step below.
++#
++#   - Is the release tag the proper format?
++#     See the comments for the "Extract Version From Tag" step below.
++#
++#   - Is a GitHub release being published?
++#     This workflow will only run when a release is published, not when a
++#     release is updated. Furthermore, note that while a GitHub release will
++#     (by default) create a repository tag, a repository tag will not create
++#     or publish a GitHub release.
++#
++#   - Has the module's entry on FoundryVTT's module administration site
++#     (https://foundryvtt.com/admin) been updated?
++#
++name: Create Module Files For GitHub Release
++
++
++env:
++  # The URL used for the module's "Project URL" link on FoundryVTT's website.
++  project_url: "https://github.com/${{github.repository}}"
++
++  # A URL that will always point to the latest manifest.
++  # FoundryVTT uses this URL to check whether the current module version that
++  # is installed is the latest version. This URL should NOT change,
++  # otherwise FoundryVTT won't be able to perform this check.
++  latest_manifest_url: "https://github.com/${{github.repository}}/releases/latest/download/module.json"
++
++  # The URL to the module archive associated with the module release being
++  # processed by this workflow.
++  release_module_url: "https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip"
++
++
++on:
++  # Only run this workflow when a release is published.
++  # To modify this workflow when other events occur, see:
++  #   - https://docs.github.com/en/actions/using-workflows/triggering-a-workflow
++  #   - https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
++  #   - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
++  #
++  # Note that some steps may depend on context variables that are only
++  # available for release events, so if you add other events, you may need to
++  # alter other parts of this workflow.
++  release:
++    types: [published]
++
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    permissions:
++      contents: write
++
++    steps:
++      - name: Checkout Repository
++        uses: actions/checkout@v3
++
++
++      # Extract version embedded in the tag.
++      # This step expects the tag to be one of the following formats:
++      #   - "v<major>.<minor>.<patch>" (e.g., "v1.2.3")
++      #   - "<major>.<minor>.<patch>"  (e.g., "1.2.3")
++      #
++      # The version will be used by later steps to fill in the value for the
++      # "version" key required for a valid module manifest.
++      - name: Extract Version From Tag
++        id: get_version
++        uses: battila7/get-version-action@v2
++
++
++      # Modify "module.json" with values specific to the release.
++      # Since the values for the "version" and "url" keys aren't known ahead of
++      # time, the manifest file in the repository is updated with these values.
++      #
++      # While this does modify the manifest file in-place, the changes are not
++      # commited to the repository, and only exist in the action's filesystem.
++      - name: Modify Module Manifest With Release-Specific Values
++        id: sub_manifest_link_version
++        uses: cschleiden/replace-tokens@v1
++        with:
++          files: 'module.json'
++        env:
++          VERSION: ${{steps.get_version.outputs.version-without-v}}
++          URL: ${{ env.project_url }}
++          MANIFEST: ${{ env.latest_manifest_url }}
++          DOWNLOAD: ${{ env.release_module_url }}
++
++
++      # Create a "module.zip" archive containing all the module's required files.
++      # If you have other directories or files that will need to be added to
++      # your packaged module, add them here.
++      - name: Create Module Archive
++        run: |
++          # Note that `zip` will only emit warnings when a file or directory
++          # doesn't exist, it will not fail.
++          zip                                    \
++            `# Options`                          \
++            --recurse-paths                      \
++            `# The name of the output file`      \
++             ./module.zip                        \
++            `# The files that will be included.` \
++            module.json                          \
++            README.md                            \
++            LICENSE                              \
++            templates                            \
++            scripts/                             \
++            styles/                              \
++            packs/                               \
++            language/                            \
++            lang/
++          # Don't forget to add a backslash at the end of the line for any
++          # additional files or directories!
++
++
++      # Update the GitHub release with the manifest and module archive files.
++      - name: Update Release With Files
++        id: create_version_release
++        uses: ncipollo/release-action@v1
++        with:
++          allowUpdates: true
++          name: ${{ github.event.release.name }}
++          draft: ${{ github.event.release.unpublished }}
++          prerelease: ${{ github.event.release.prerelease }}
++          token: ${{ secrets.GITHUB_TOKEN }}
++          artifacts: './module.json, ./module.zip'
++          tag: ${{ github.event.release.tag_name }}
++          body: ${{ github.event.release.body }}
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+new file mode 100644
+--- /dev/null	(date 1719177710296)
++++ b/.idea/vcs.xml	(date 1719177710296)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+Index: LICENSE
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/LICENSE b/LICENSE
+new file mode 100644
+--- /dev/null	(date 1717266580212)
++++ b/LICENSE	(date 1717266580212)
+@@ -0,0 +1,21 @@
++MIT License
++
++Copyright (c) 2020 Repository Owner
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="25fd3a0f-049f-45e2-a586-8fa7ebdcc2cd" name="Changes" comment="1.) Allow for multiple DCs for different skills&#10;2.) Allow for DCs to be changed even once a roll has been setup.&#10;3.) Generally reworked the underlying code&#10;4.) Add the ability to pickup new inline skill syntax and create a button which sets up a roll.&#10;&#10;Potential Issues:&#10;&#10;Some actions might not work correctly if they expect a supporting skill but they have multiple potential options/statistics. This is one of the next areas I want to expand next time.">
+      <change afterPath="$PROJECT_DIR$/.github/dependabot.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.github/workflows/main.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="MIXED" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/scripts/module.js" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="proportion" value="0.76840985" />
+    <option name="showPreview" value="true" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="2iIUhMRWFISe13qJTV195kxcqt3" />
+  <component name="ProjectLevelVcsManager">
+    <OptionsSetting value="false" id="Update" />
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Node.js.module.js.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "new-main",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.obiscr.chatgpt.settings.EasyCode",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "PLAIN_TEXT"
+    ]
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-91d5c284f522-JavaScript-WS-241.15989.105" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="25fd3a0f-049f-45e2-a586-8fa7ebdcc2cd" name="Changes" comment="" />
+      <created>1719177702602</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1719177702602</updated>
+      <workItem from="1719177703882" duration="6224000" />
+      <workItem from="1719214507799" duration="4507000" />
+      <workItem from="1719236613862" duration="6918000" />
+      <workItem from="1719252422359" duration="12000" />
+      <workItem from="1719262678112" duration="1271000" />
+      <workItem from="1719304069329" duration="1177000" />
+      <workItem from="1720629723720" duration="2339000" />
+      <workItem from="1720779681785" duration="1645000" />
+      <workItem from="1720965248683" duration="13107000" />
+      <workItem from="1721313681200" duration="2911000" />
+      <workItem from="1727273541337" duration="21466000" />
+      <workItem from="1727344512658" duration="180000" />
+      <workItem from="1727344707478" duration="9538000" />
+      <workItem from="1727438184154" duration="10384000" />
+      <workItem from="1727515018284" duration="8601000" />
+      <workItem from="1727603811543" duration="15681000" />
+      <workItem from="1727690606654" duration="377000" />
+    </task>
+    <task id="LOCAL-00001" summary="Fixed the inline skill rolls.">
+      <option name="closed" value="true" />
+      <created>1720629823736</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1720629823736</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Fixed the inline skill rolls.">
+      <option name="closed" value="true" />
+      <created>1720630045784</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1720630045784</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Merge remote-tracking branch 'origin/master'">
+      <option name="closed" value="true" />
+      <created>1720630368524</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1720630368524</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Merge remote-tracking branch 'origin/master'&#10;&#10;Fixed the DC increment/decrement controls.">
+      <option name="closed" value="true" />
+      <created>1720969069269</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1720969069269</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Merge remote-tracking branch 'origin/master'&#10;&#10;Fixed the DC increment/decrement controls.">
+      <option name="closed" value="true" />
+      <created>1720976011023</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1720976011023</updated>
+    </task>
+    <task id="LOCAL-00006" summary="1.) Allow for multiple DCs for different skills&#10;2.) Allow for DCs to be changed even once a roll has been setup.&#10;3.) Generally reworked the underlying code&#10;4.) Add the ability to pickup new inline skill syntax and create a button which sets up a roll.&#10;&#10;Potential Issues:&#10;&#10;Some actions might not work correctly if they expect a supporting skill but they have multiple potential options/statistics. This is one of the next areas I want to expand next time.">
+      <option name="closed" value="true" />
+      <created>1727690735150</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1727690735150</updated>
+    </task>
+    <task id="LOCAL-00007" summary="1.) Allow for multiple DCs for different skills&#10;2.) Allow for DCs to be changed even once a roll has been setup.&#10;3.) Generally reworked the underlying code&#10;4.) Add the ability to pickup new inline skill syntax and create a button which sets up a roll.&#10;&#10;Potential Issues:&#10;&#10;Some actions might not work correctly if they expect a supporting skill but they have multiple potential options/statistics. This is one of the next areas I want to expand next time.">
+      <option name="closed" value="true" />
+      <created>1727690978048</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1727690978048</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Fixed the inline skill rolls." />
+    <MESSAGE value="Merge remote-tracking branch 'origin/master'" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;Fixed the DC increment/decrement controls." />
+    <MESSAGE value="1.) Allow for multiple DCs for different skills&#10;2.) Allow for DCs to be changed even once a roll has been setup.&#10;3.) Generally reworked the underlying code&#10;4.) Add the ability to pickup new inline skill syntax and create a button which sets up a roll.&#10;&#10;Potential Issues:&#10;&#10;Some actions might not work correctly if they expect a supporting skill but they have multiple potential options/statistics. This is one of the next areas I want to expand next time." />
+    <option name="LAST_COMMIT_MESSAGE" value="1.) Allow for multiple DCs for different skills&#10;2.) Allow for DCs to be changed even once a roll has been setup.&#10;3.) Generally reworked the underlying code&#10;4.) Add the ability to pickup new inline skill syntax and create a button which sets up a roll.&#10;&#10;Potential Issues:&#10;&#10;Some actions might not work correctly if they expect a supporting skill but they have multiple potential options/statistics. This is one of the next areas I want to expand next time." />
+  </component>
+</project>
