@@ -21,6 +21,13 @@
     "systems": [],
     "requires": []
   },
+  "dependencies": [
+    {
+        "name": "socketlib",
+        "type": "module",
+        "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-socketlib/master/module.json"
+    }
+  ],
   "esmodules": [
     "scripts/module.js"
   ],
