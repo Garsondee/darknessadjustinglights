@@ -90,9 +90,8 @@ function mapOutcomeToDegree(outcome) {
  */
 function extractRollData(message) {
     try {
-        // Initialize variables
         let degreeOfSuccess, outcome, diceResults, totalModifier, totalResult, rollFormula, dc, actorId, actionName,
-            isBlindRoll, rollMode; // Declare rollMode here
+            isBlindRoll, rollMode;
 
         // Set default rollMode
         rollMode = message.rollMode || message.flags?.core?.rollMode || 'publicroll';
@@ -100,11 +99,7 @@ function extractRollData(message) {
 
         // Check if message.rolls exists and has at least one Roll instance
         if (message.rolls && message.rolls.length > 0 && message.rolls[0] instanceof Roll) {
-            const roll = message.rolls[0]; // Access the first Roll object
-
-            // Extract necessary fields
-            outcome = message.flags.pf2e.context.outcome ?? 'unknown';
-            degreeOfSuccess = mapOutcomeToDegree(outcome); // Map the outcome string to a numeric degree
+            const roll = message.rolls[0];
 
             // Extract dice results
             diceResults = [];
@@ -119,54 +114,57 @@ function extractRollData(message) {
             totalResult = roll.total ?? 0;
             rollFormula = roll.formula ?? '1d20';
 
-            // Calculate totalModifier
-            // For PF2e, modifiers are stored in message flags
-            const modifiers = message.flags.pf2e.modifiers || [];
-            totalModifier = modifiers.reduce((sum, mod) => sum + mod.modifier, 0);
+            // Extract actor information
+            actorId = message.speaker?.actor ?? 'unknown';
 
-            dc = message.flags?.pf2e?.context?.dc?.value ?? 15; // Default DC to 15 if not specified
+            // Attempt to extract DC and degree of success
+            const context = message.flags?.pf2e?.context ?? {};
 
+            dc = context.dc?.value ?? 15;
+
+            // Extract outcome and map to degreeOfSuccess
+            outcome = context.outcome ?? 'unknown';
+            degreeOfSuccess = mapOutcomeToDegree(outcome);
+
+            // Extract action name from context.slug or flavor text
+            const rawActionTitle = context.title;
+            actionName = extractActionNameFromFlavor(rawActionTitle) || extractActionNameFromFlavor(message.flavor) || 'unknown-action';
+
+            // Log the extracted information for debugging
+            console.log(`[${MODULE_NAMESPACE}] Action: ${actionName}`);
+            console.log(`[${MODULE_NAMESPACE}] Actor ID: ${actorId}`);
+            console.log(`[${MODULE_NAMESPACE}] Degree of Success: ${degreeOfSuccess}`);
+            console.log(`[${MODULE_NAMESPACE}] Outcome: ${outcome}`);
+            console.log(`[${MODULE_NAMESPACE}] Dice Results: ${diceResults.join(', ')}`);
+            console.log(`[${MODULE_NAMESPACE}] Total Result: ${totalResult}`);
+            console.log(`[${MODULE_NAMESPACE}] DC: ${dc}`);
+            console.log(`[${MODULE_NAMESPACE}] Roll Formula: ${rollFormula}`);
+            console.log(`[${MODULE_NAMESPACE}] Roll Mode: ${rollMode} (${isBlindRoll ? 'Blind Roll' : 'Public Roll'})`);
+            console.log(`[${MODULE_NAMESPACE}] message.flags.pf2e:`, message.flags.pf2e);
+
+            // Handle the extracted data
+            handleExtractRollData({
+                actorId,
+                actionName,
+                degreeOfSuccess,
+                outcome,
+                diceResults,
+                totalModifier: totalResult - diceResults.reduce((a, b) => a + b, 0),
+                totalResult,
+                dc,
+                rollFormula,
+                isBlindRoll
+            });
         } else {
             console.warn('extractRollData: No valid Roll object found in message.rolls.');
             return;
         }
-
-        // Extract actor information
-        actorId = message.speaker?.actor ?? 'unknown';
-
-        // Sanitize actionName by parsing the title HTML
-        const rawActionTitle = message.flags?.pf2e?.context?.title;
-        actionName = extractActionNameFromFlavor(rawActionTitle) || extractActionNameFromFlavor(message.flavor) || 'unknown-action';
-
-        // Log the extracted information for debugging
-        console.log(`[${MODULE_NAMESPACE}] Action: ${actionName}`);
-        console.log(`[${MODULE_NAMESPACE}] Actor ID: ${actorId}`);
-        console.log(`[${MODULE_NAMESPACE}] Degree of Success: ${degreeOfSuccess}`);
-        console.log(`[${MODULE_NAMESPACE}] Outcome: ${outcome}`);
-        console.log(`[${MODULE_NAMESPACE}] Dice Results: ${diceResults.join(', ')}`);
-        console.log(`[${MODULE_NAMESPACE}] Total Modifier: ${totalModifier}`);
-        console.log(`[${MODULE_NAMESPACE}] Total Result: ${totalResult}`);
-        console.log(`[${MODULE_NAMESPACE}] DC: ${dc}`);
-        console.log(`[${MODULE_NAMESPACE}] Roll Formula: ${rollFormula}`);
-        console.log(`[${MODULE_NAMESPACE}] Roll Mode: ${rollMode} (${isBlindRoll ? 'Blind Roll' : 'Public Roll'})`);
-
-        // Handle the extracted data
-        handleExtractRollData({ // Corrected function name
-            actorId,
-            actionName,
-            degreeOfSuccess,
-            outcome,
-            diceResults,
-            totalModifier,
-            totalResult,
-            dc,
-            rollFormula,
-            isBlindRoll
-        });
     } catch (error) {
         console.error(`[${MODULE_NAMESPACE}] Error extracting roll data from chat message:`, error);
     }
 }
+
+
 
 /**
  * Handles the extracted roll data by emitting socket events and updating the UI.
@@ -186,55 +184,43 @@ function extractRollData(message) {
  */
 function handleExtractRollData(rollData) {
     const {
-        actorId,
-        actionName,
-        degreeOfSuccess,
-        outcome,
-        diceResults,
-        totalModifier,
-        totalResult,
-        dc,
-        rollFormula,
-        isBlindRoll
+        actorId, actionName, degreeOfSuccess, totalResult, isBlindRoll
     } = rollData;
 
-    // Construct the result object as expected by updateRollResultInCharacterBox
-    const result = {degreeOfSuccess, total: totalResult};
+    const result = {
+        degreeOfSuccess, total: totalResult
+    };
 
-    // Map actionName to skillOrSaveKey using the actionToStatMap
     let skillOrSaveKey;
     if (actionName === 'perception') {
         skillOrSaveKey = `perception:${actionName}`;
     } else if (actionToStatMap[actionName]) {
-        // If the action has an associated statistic, include it in the full-slug
         const associatedStat = actionToStatMap[actionName];
         skillOrSaveKey = `action:${actionName}:${associatedStat}`;
     } else {
-        // For actions without an associated statistic
         skillOrSaveKey = `action:${actionName}`;
     }
 
-    // Prepare socket data with the correct structure
-    const socketData = {actorId, skillOrSaveKey, result, isBlindRoll};
-
-    console.log("handleExtractRollData: Emitting socket event with data:", socketData);
+    const socketData = {
+        actorId, skillOrSaveKey, result, isBlindRoll
+    };
 
     if (isBlindRoll) {
-        // Handle blind rolls if necessary
         const gmUserIds = game.users.filter(u => u.isGM).map(u => u.id);
         socketInstance.executeForUsers("updateRollResultUI", gmUserIds, socketData);
-        const playerSocketData = {actorId, isBlindRoll}; // No result data
+        const playerSocketData = {
+            actorId, isBlindRoll
+        };
         socketInstance.executeForOthers("updateRollResultUI", playerSocketData);
     } else {
-        // For public rolls, send data to everyone
         socketInstance.executeForEveryone("updateRollResultUI", socketData);
     }
 
-    // Optionally, update the character box UI for the GM directly
     if (game.user.isGM) {
         updateRollResultInCharacterBox(socketData);
     }
 }
+
 
 /**
  * Registers all necessary socket event listeners for the PF2E Roll Manager module.
@@ -274,21 +260,21 @@ function registerSocketListeners(socket) {
 
     // Listener for updating DC inputs
     socket.register("updateDCInput", (data) => {
-        console.log(`[${MODULE_NAMESPACE}] Received 'updateDCInput' event with data:`, data);
-        const {actorId, skillSlug, newDC} = data;
-        if (!actorId || !skillSlug || typeof newDC !== 'number') {
+        const {fullSlug, newDC} = data;
+        if (!fullSlug || typeof newDC !== 'number') {
             console.warn(`[${MODULE_NAMESPACE}] 'updateDCInput' event received with invalid data:`, data);
             return;
         }
         // Update the DC input box if it exists
-        const dcInput = document.querySelector(`.skill-dc-input[data-slug="${skillSlug}"][data-actor-id="${actorId}"]`);
+        const dcInput = document.querySelector(`.skill-dc-input[data-full-slug="${fullSlug}"]`);
         if (dcInput) {
             dcInput.value = newDC;
-            console.log(`[${MODULE_NAMESPACE}] Updated DC input for actor ${actorId}, skill ${skillSlug} to ${newDC}`);
+            console.log(`[${MODULE_NAMESPACE}] Updated DC input for fullSlug ${fullSlug} to ${newDC}`);
         } else {
-            console.warn(`[${MODULE_NAMESPACE}] DC input not found for actor ${actorId}, skill ${skillSlug}.`);
+            console.warn(`[${MODULE_NAMESPACE}] DC input not found for fullSlug ${fullSlug}.`);
         }
     });
+
 
     // Test listener to confirm socket communication
     socket.register("test", (data) => {
@@ -304,34 +290,6 @@ function registerSocketListeners(socket) {
     console.log(`[${MODULE_NAMESPACE}] All socket event listeners registered successfully.`);
 }
 
-/**
- * Selects and highlights the tokens on the canvas that correspond to the provided actors.
- *
- * @param {Actor[]} actors - Array of Actor objects to select tokens for.
- * @returns {void}
- */
-function selectTokensForActors(actors) {
-    // Find tokens on the canvas that correspond to the provided actors
-    const tokensToSelect = canvas.tokens.placeables.filter(token => {
-        const actor = token.actor;
-        return actor && actors.some(a => a.id === actor.id);
-    });
-
-    if (tokensToSelect.length === 0) {
-        ui.notifications.warn("No tokens found for the selected actors.");
-        return;
-    }
-
-    // Release all currently controlled tokens
-    canvas.tokens.releaseAll();
-
-    // Control the desired tokens without releasing others (since we've already released them)
-    tokensToSelect.forEach(token => token.control({
-        releaseOthers: false
-    }));
-
-    console.log(`Selected ${tokensToSelect.length} token(s) for actors:`, actors.map(a => a.name));
-}
 
 /**
  * Handles the click event for action buttons, opening the Roll Manager dialog
@@ -549,7 +507,7 @@ let selectedCharacterIds = new Set();
  * @param {HTMLElement} container - The container element holding character selection buttons.
  * @returns {void}
  */
-function attachCharacterSelectionListeners(container) {
+function attachCharacterSelectionListeners(container, updateAllPercentChances) {
     console.log("attachCharacterSelectionListeners: Initializing listeners for character selection.");
 
     // Ensure the container is valid
@@ -607,17 +565,20 @@ function attachCharacterSelectionListeners(container) {
                 console.log(`Character Selection Listener: Selecting actor ID: ${actorId}`);
             }
 
-            // Log the current state of selected characters
-            console.log("Character Selection Listener: Current selectedCharacterIds:", Array.from(selectedCharacterIds));
-
             // Save the updated selections to the world setting
             savePersistedSelections();
+
+            // Call the updateAllPercentChances function
+            if (typeof updateAllPercentChances === 'function') {
+                updateAllPercentChances();
+            }
         });
     });
 
     // Log completion of listener attachment
     console.log("attachCharacterSelectionListeners: All listeners attached successfully.");
 }
+
 
 /**
  * Saves the currently selected character IDs to the persistent world settings.
@@ -955,7 +916,7 @@ async function createActionDropdown({
 
     // Determine the default DC based on the level of the selected actors
     const selectedActors = game.actors.filter(actor => actor.hasPlayerOwner && actor.type === "character" && game.actors.party.members.includes(actor));
-    const highestLevel = Math.max(...selectedActors.map(actor => actor.system.details.level.value));
+    const highestLevel = Math.max(...selectedActors.map(actor => actor.system.details.level.value || 0));
     defaultDC = calculateDefaultDC(highestLevel);
     console.log(`createActionDropdown: Calculated default DC based on highest level (${highestLevel}): ${defaultDC}`);
 
@@ -964,28 +925,35 @@ async function createActionDropdown({
 
     // Define major skills
     const majorSkills = [{name: 'Acrobatics', slug: 'acrobatics'}, {name: 'Arcana', slug: 'arcana'}, {
-        name: 'Athletics', slug: 'athletics'
+        name: 'Athletics',
+        slug: 'athletics'
     }, {name: 'Crafting', slug: 'crafting'}, {name: 'Deception', slug: 'deception'}, {
-        name: 'Diplomacy', slug: 'diplomacy'
+        name: 'Diplomacy',
+        slug: 'diplomacy'
     }, {name: 'Intimidation', slug: 'intimidation'}, {name: 'Medicine', slug: 'medicine'}, {
-        name: 'Nature', slug: 'nature'
+        name: 'Nature',
+        slug: 'nature'
     }, {name: 'Occultism', slug: 'occultism'}, {name: 'Performance', slug: 'performance'}, {
-        name: 'Religion', slug: 'religion'
+        name: 'Religion',
+        slug: 'religion'
     }, {name: 'Society', slug: 'society'}, {name: 'Stealth', slug: 'stealth'}, {
-        name: 'Survival', slug: 'survival'
+        name: 'Survival',
+        slug: 'survival'
     }, {name: 'Thievery', slug: 'thievery'}];
 
     // Create HTML for skill buttons
     const majorSkillButtonsHtml = buildSkillButtonsHtml(majorSkills, 'skill:');
     const perceptionButtonHtml = buildSkillButtonsHtml([{name: 'Perception', slug: 'perception'}], 'perception:');
     const savingThrowsButtonsHtml = buildSkillButtonsHtml([{
-        name: 'Fortitude Save', slug: 'fortitude'
+        name: 'Fortitude Save',
+        slug: 'fortitude'
     }, {name: 'Reflex Save', slug: 'reflex'}, {name: 'Will Save', slug: 'will'}], 'save:');
 
     // Handle recall knowledge skills
-    const recallKnowledgeSkills = game.actors.filter(actor => actor.hasPlayerOwner && actor.type === "character" && game.actors.party.members.includes(actor))
+    const recallKnowledgeSkills = game.actors
+        .filter(actor => actor.hasPlayerOwner && actor.type === "character" && game.actors.party.members.includes(actor))
         .flatMap(actor => {
-            const recallSkills = getRecallKnowledgeSkills(actor); // Assuming this returns an object
+            const recallSkills = getRecallKnowledgeSkills(actor);
             if (!recallSkills) {
                 console.warn(`createActionDropdown: getRecallKnowledgeSkills returned undefined for actor "${actor.name}".`);
                 return [];
@@ -997,13 +965,13 @@ async function createActionDropdown({
                 }
                 const slug = lore.toLowerCase().replace(/\s+/g, '-');
                 return {
-                    name: lore, slug: slug // Removed 'statistic' property
+                    name: lore, slug: slug
                 };
             }).filter(skill => skill !== null);
         });
 
     console.log(`createActionDropdown: Compiled Recall Knowledge Skills:`, recallKnowledgeSkills);
-    const recallKnowledgeButtonsHtml = buildSkillButtonsHtml(recallKnowledgeSkills, 'skill:'); // Changed prefix to 'skill:'
+    const recallKnowledgeButtonsHtml = buildSkillButtonsHtml(recallKnowledgeSkills, 'skill:');
 
     // Handle actions grouped by statistics
     const skillButtonsHtml = Object.keys(groupedActions).sort().map(stat => {
@@ -1066,8 +1034,8 @@ async function createActionDropdown({
             console.log("Dialog: Rendered.");
             restoreCollapsibleState();
 
-            // Attach all event listeners
-            attachDialogEventListeners(html);
+            // Attach all event listeners, now including defaultDC
+            attachDialogEventListeners(html, defaultDC);
 
             // Pre-select actions based on preSelectedActions
             preSelectedActions.forEach(actionSlug => {
@@ -1096,114 +1064,6 @@ async function createActionDropdown({
 
     console.log("createActionDropdown: Creating and rendering the Action Dropdown dialog.");
     dialog.render(true);
-}
-
-/**
- * Executes instant rolls for selected actors and actions.
- *
- * @param {Actor[]} selectedActors - The actors to perform the rolls.
- * @param {string[]} selectedActions - The actions or skills to roll, represented as prefixed slugs (e.g., 'skill:acrobatics').
- * @param {number} dc - The default Difficulty Class (DC) for the rolls.
- * @param {boolean} createMessage - Whether to create a chat message for the roll.
- * @param {boolean} [skipDialog=false] - Whether to skip any confirmation dialogs.
- * @param {string} [rollMode="publicroll"] - The mode of the roll (e.g., 'publicroll', 'blindroll').
- * @param {string|null} [selectedStatistic=null] - The selected statistic for the action, if any.
- * @param {boolean} [fromDialog=false] - Indicates if the roll is initiated from a dialog.
- * @param {boolean} [secret=false] - Indicates if the roll should be secret (hidden from players).
- * @param {Object} [additionalOptions={}] - Additional options for the roll.
- * @param {Object} [additionalOptions.skillDCs] - An object mapping 'prefix:slug' to specific DCs.
- * @returns {Promise<void>}
- */
-async function executeInstantRoll(selectedActors, selectedActions, dc, createMessage, skipDialog, rollMode, selectedStatistic, fromDialog = false, secret = false, additionalOptions = {}) {
-    try {
-        console.log(`[${MODULE_NAMESPACE}] Executing instant roll with parameters:`, {
-            selectedActors,
-            selectedActions,
-            dc,
-            createMessage,
-            skipDialog,
-            rollMode,
-            selectedStatistic,
-            fromDialog,
-            secret,
-            additionalOptions,
-        });
-
-        const isBlindRoll = rollMode === 'blindroll';
-        const isSecret = secret || isBlindRoll;
-
-        // Construct roll options
-        const rollOptions = {
-            createMessage, rollMode, secret: isSecret, dc: dc, // Default DC
-            ...additionalOptions,
-        };
-
-        // Select the tokens for the selected actors
-        selectTokensForActors(selectedActors);
-
-        // Iterate over each selected actor and execute the action
-        for (const actor of selectedActors) {
-            for (const selectedSlug of selectedActions) {
-                const parts = selectedSlug.split(':');
-                if (parts.length < 2) {
-                    console.error(`[${MODULE_NAMESPACE}] executeInstantRoll: selectedSlug "${selectedSlug}" does not have enough parts. Expected format "prefix:slug" or "prefix:slug:statistic". Skipping.`);
-                    continue;
-                }
-                const prefix = parts[0].toLowerCase();
-
-                let currentDC = dc; // Start with default DC
-                // Override DC if specified in skillDCs
-                if (rollOptions.skillDCs && rollOptions.skillDCs[selectedSlug]) {
-                    currentDC = rollOptions.skillDCs[selectedSlug];
-                }
-
-                switch (prefix) {
-                    case 'skill': {
-                        const skillSlug = parts[1];
-                        if (!skillSlug) {
-                            console.error(`[${MODULE_NAMESPACE}] executeInstantRoll: skillSlug is undefined for selectedSlug "${selectedSlug}". Skipping this skill.`);
-                            continue;
-                        }
-                        // Execute skill roll with specific DC
-                        await executeSkillRoll(actor, skillSlug, currentDC, {...rollOptions});
-                        break;
-                    }
-                    case 'action': {
-                        const actionSlug = parts[1];
-                        const statistic = parts[2] || null;
-                        if (!actionSlug) {
-                            console.error(`[${MODULE_NAMESPACE}] executeInstantRoll: actionSlug is undefined for selectedSlug "${selectedSlug}". Skipping this action.`);
-                            continue;
-                        }
-                        // Execute action roll with specific DC
-                        await executeActionRoll(actor, actionSlug, statistic, currentDC, rollOptions, selectedStatistic);
-                        break;
-                    }
-                    case 'save': {
-                        const saveSlug = parts[1];
-                        if (!saveSlug) {
-                            console.error(`[${MODULE_NAMESPACE}] executeInstantRoll: saveSlug is undefined for selectedSlug "${selectedSlug}". Skipping this save.`);
-                            continue;
-                        }
-                        // Execute save roll with specific DC
-                        await executeSaveRoll(actor, saveSlug, currentDC, rollOptions);
-                        break;
-                    }
-                    case 'perception': {
-                        // Execute perception roll with specific DC
-                        await executePerceptionRoll(actor, currentDC, rollOptions);
-                        break;
-                    }
-                    default:
-                        console.warn(`[${MODULE_NAMESPACE}] executeInstantRoll: Unhandled prefix "${prefix}" in selectedSlug "${selectedSlug}".`);
-                        break; // Skip unhandled prefixes
-                }
-            }
-        }
-    } catch (error) {
-        console.error(`[${MODULE_NAMESPACE}] executeInstantRoll: Error:`, error);
-        ui.notifications.error('An error occurred during the instant roll. See console for details.');
-    }
 }
 
 function saveFoundrySettings() {
@@ -1245,7 +1105,15 @@ function saveFoundrySettings() {
 
 function createIndicator(degreeOfSuccess) {
     const indicator = document.createElement('span');
-    switch (degreeOfSuccess) {
+    let degree = degreeOfSuccess;
+
+    if (typeof degree === 'string' && !isNaN(degree)) {
+        degree = parseInt(degree, 10);
+    } else if (typeof degree === 'string') {
+        degree = degree.toLowerCase();
+    }
+
+    switch (degree) {
         case '???':
             indicator.textContent = "???";
             indicator.style.color = 'gray';
@@ -1384,10 +1252,10 @@ function createCharacterBox(actor, skillsToRoll, dc, isBlindGM, index, skillDCsF
     const shouldShowDCs = game.user.isGM || game.pf2e.settings.metagame.dcs;
 
     // Create DC Inputs
-    skillsToRoll.forEach(skillName => {
-        const parts = skillName.split(':');
+    skillsToRoll.forEach(fullSlug => {
+        const parts = fullSlug.split(':');
         const slug = parts[1].toLowerCase();
-        const key = `${actor.id}:${slug}`;
+        const key = fullSlug;
         const initialDC = skillDCsFromSocket[key] || dc;
 
         const dcContainer = document.createElement('div');
@@ -1419,21 +1287,21 @@ function createCharacterBox(actor, skillsToRoll, dc, isBlindGM, index, skillDCsF
             // dcInput.disabled = true;
         }
 
-        // Event listener for GM to emit DC changes
         if (game.user.isGM) {
             dcInput.addEventListener('change', (event) => {
                 const newDC = parseInt(event.target.value, 10);
                 if (!isNaN(newDC)) {
                     // Update the central skillDCs object
                     skillDCsFromSocket[key] = newDC;
-                    // Emit a socket event with the actorId, skillSlug, and newDC
+                    // Emit a socket event with the fullSlug and newDC
                     socketInstance.executeForEveryone('updateDCInput', {
-                        actorId: actor.id, skillSlug: slug, newDC: newDC
+                        fullSlug: key, newDC: newDC
                     });
-                    console.log(`[${MODULE_NAMESPACE}] DC input changed for actor ${actor.id}, skill ${slug}: new DC = ${newDC}`);
+                    console.log(`[${MODULE_NAMESPACE}] DC input changed for fullSlug ${key}: new DC = ${newDC}`);
                 }
             });
         }
+
 
         dcContainer.appendChild(dcLabel);
         dcContainer.appendChild(dcInput);
@@ -2061,12 +1929,18 @@ function buildSkillButtonsHtml(skills, prefix = '') {
                 data-slug="${a.slug}" 
                 placeholder="DC" 
                 min="1" 
-                max="60" 
-                style="display: none; width: 60px; margin-left: 10px;">
+                max="60"
+                style="display: none;"> <!-- Hide initially -->
+            <span class="percent-chance" 
+                data-full-slug="${fullSlug}"
+                style="display: none;"> <!-- Hide initially -->
+                0%
+            </span>
             `;
     }).join('\n')}
     `;
 }
+
 
 /**
  * Builds an HTML string for the character selection grid, including buttons with associated character images and names.
@@ -2166,8 +2040,97 @@ function buildDialogContent(options) {
  * @param {jQuery} html - The jQuery object representing the rendered dialog HTML.
  * @returns {void}
  */
-function attachDialogEventListeners(html) {
+function attachDialogEventListeners(html, defaultDC) {
     console.log("attachDialogEventListeners: Attaching event listeners.");
+
+    // Define the updatePercentChance function
+    function updatePercentChance(fullSlug) {
+        // Get selected actors
+        const selectedActors = Array.from(selectedCharacterIds).map(id => game.actors.get(id)).filter(actor => actor !== undefined);
+
+        // Get the percent chance span
+        const percentChanceSpan = html.find(`.percent-chance[data-full-slug="${fullSlug}"]`);
+
+        // If no actors are selected, show 0%
+        if (selectedActors.length === 0) {
+            percentChanceSpan.text('0%');
+            percentChanceSpan.show();
+            return;
+        }
+
+        const dcInput = html.find(`.skill-dc-input[data-full-slug="${fullSlug}"]`);
+        const dc = parseInt(dcInput.val()) || defaultDC;
+
+        // Get the modifiers for each selected actor
+        const modifiers = selectedActors.map(actor => {
+            const skills = getSkills(actor);
+            const saves = getSaves(actor);
+            const otherAttributes = getOtherAttributes(actor);
+            const parts = fullSlug.split(':');
+            const prefix = parts[0];
+            const slug = parts[1];
+            const statistic = parts[2];
+            let modifier = 0;
+            if (prefix === 'skill') {
+                modifier = getModifierForStatistic(actor, slug, skills, saves, otherAttributes);
+            } else if (prefix === 'action') {
+                if (statistic) {
+                    modifier = getModifierForStatistic(actor, statistic, skills, saves, otherAttributes);
+                } else {
+                    console.warn(`No statistic provided for action ${slug}`);
+                }
+            } else if (prefix === 'perception') {
+                modifier = getModifierForStatistic(actor, slug, skills, saves, otherAttributes);
+            } else if (prefix === 'save') {
+                modifier = getModifierForStatistic(actor, slug, skills, saves, otherAttributes);
+            }
+            return modifier;
+        });
+
+        // Compute individual probabilities
+        const probabilities = modifiers.map(modifier => {
+            const t = dc - modifier;
+            let p = 0;
+            if (t <= 1) {
+                p = 1;
+            } else if (t >= 20) {
+                p = 0;
+            } else {
+                p = (21 - t) / 20;
+            }
+            return p;
+        });
+
+        // Compute combined probability
+        const probAtLeastOneSuccess = 1 - probabilities.reduce((acc, p) => acc * (1 - p), 1);
+
+        // Convert to percentage
+        const percentChance = Math.round(probAtLeastOneSuccess * 100);
+
+        // Update the display
+        percentChanceSpan.text(`${percentChance}%`);
+        percentChanceSpan.show();
+
+        // Remove any previous classes
+        percentChanceSpan.removeClass('low medium high');
+
+        // Apply conditional class based on percentage
+        if (percentChance < 25) {
+            percentChanceSpan.addClass('low');
+        } else if (percentChance >= 75) {
+            percentChanceSpan.addClass('high');
+        } else {
+            percentChanceSpan.addClass('medium');
+        }
+    }
+
+    function updateAllPercentChances() {
+        html.find('.skill-button.selected').each((index, element) => {
+            const button = $(element);
+            const fullSlug = button.data('full-slug');
+            updatePercentChance(fullSlug);
+        });
+    }
 
     // DC Adjustment
     const updateDC = (value) => {
@@ -2206,21 +2169,69 @@ function attachDialogEventListeners(html) {
         const fullSlug = button.data('full-slug');
         const isSelected = button.hasClass('selected');
         console.log(`attachDialogEventListeners: Skill button toggled: "${fullSlug}" (${slug}), selected: ${isSelected}`);
-        const dcInput = html.find(`.skill-dc-input[data-slug="${slug}"]`);
+        const dcInput = html.find(`.skill-dc-input[data-full-slug="${fullSlug}"]`);
+        const percentChanceSpan = html.find(`.percent-chance[data-full-slug="${fullSlug}"]`);
+
         if (isSelected) {
             dcInput.show();
-            console.log(`attachDialogEventListeners: Showing DC input for: "${slug}"`);
+            percentChanceSpan.show();
+            console.log(`attachDialogEventListeners: Showing DC input and percent chance for: "${slug}"`);
+
+            // If dcInput has no value, set it to defaultDC
+            if (!dcInput.val()) {
+                dcInput.val(defaultDC);
+                dcInput.addClass('default-dc'); // Add a class to indicate default value
+            }
+
+            // Update the percent chance
+            updatePercentChance(fullSlug);
         } else {
             dcInput.hide();
-            console.log(`attachDialogEventListeners: Hiding DC input for: "${slug}"`);
+            percentChanceSpan.hide();
+            console.log(`attachDialogEventListeners: Hiding DC input and percent chance for: "${slug}"`);
+            // Remove the default value indication when hiding
+            dcInput.removeClass('default-dc');
+
+            // Hide the percent chance display
+            percentChanceSpan.hide();
         }
     });
 
-    // Attach character selection listeners
+
+    // DC Input Events
+    html.find('.skill-dc-input').on('focus', (event) => {
+        const dcInput = $(event.currentTarget);
+        if (dcInput.hasClass('default-dc')) {
+            dcInput.val(''); // Clear the value
+        }
+        dcInput.removeClass('default-dc');
+    });
+
+    html.find('.skill-dc-input').on('input change', (event) => {
+        const dcInput = $(event.currentTarget);
+        const fullSlug = dcInput.data('full-slug');
+        if (dcInput.val() !== defaultDC.toString()) {
+            dcInput.removeClass('default-dc');
+        } else {
+            dcInput.addClass('default-dc');
+        }
+        updatePercentChance(fullSlug);
+    });
+
+    html.find('.skill-dc-input').on('blur', (event) => {
+        const dcInput = $(event.currentTarget);
+        if (!dcInput.val()) {
+            // If input is empty, reset to defaultDC
+            dcInput.val(defaultDC);
+            dcInput.addClass('default-dc');
+        }
+    });
+
+    // Attach character selection listeners, and pass updateAllPercentChances
     console.log("attachDialogEventListeners: Attaching character selection listeners...");
     const characterGrid = html.find('.character-selection-grid')[0];
     if (characterGrid) {
-        attachCharacterSelectionListeners(characterGrid);
+        attachCharacterSelectionListeners(characterGrid, updateAllPercentChances);
     } else {
         console.warn("attachDialogEventListeners: Character selection grid not found in dialog.");
     }
@@ -2238,8 +2249,9 @@ function attachDialogEventListeners(html) {
             const isVisible = label.includes(searchTerm);
             $button.toggle(isVisible);
 
-            // Also toggle visibility of associated DC input
+            // Also toggle visibility of associated DC input and percent chance
             $button.next('.skill-dc-input').toggle(isVisible);
+            $button.next('.skill-dc-input').next('.percent-chance').toggle(isVisible);
 
             console.log(`attachDialogEventListeners: Filtering skill "${label}": Visible=${isVisible}`);
 
@@ -2278,232 +2290,143 @@ function attachDialogEventListeners(html) {
         });
         console.log("attachDialogEventListeners: Adjusted size to 70% width and height and centered the dialog.");
     }, 10);
+
+    // Initial percent chance calculation
+    updateAllPercentChances();
 }
 
+
 /**
- * Executes a skill roll for a specific actor and skill.
+ * Executes a roll for a specific actor and roll type.
  *
  * @param {Actor} actor - The actor performing the roll.
- * @param {string} skillSlug - The raw skill slug to roll (e.g., 'deception').
+ * @param {string} rollType - The type of roll ('skill', 'action', 'perception', 'save').
+ * @param {string} slug - The slug of the skill/action/save to roll.
  * @param {number} dc - The Difficulty Class (DC) for the roll.
- * @param {Object} rollOptions - Additional options for the roll, such as rollMode, secret, etc.
- * @returns {Promise<{total: number, outcome: string, roll: Roll} | null>} - The roll result containing total, outcome, and the Roll object, or null if the roll failed.
+ * @param {Object} options - Additional options for the roll.
+ * @returns {Promise<Roll>} - The resulting Roll object.
  */
-async function executeSkillRoll(actor, skillSlug, dc, rollOptions) {
-    console.log(`Executing skill roll for actor: ${actor.name}, skill: ${skillSlug}, DC: ${dc}, rollOptions:`, rollOptions);
-
-    // Access the skill data directly from actor.system.skills
-    const skillData = actor.system.skills[skillSlug];
-    if (!skillData) {
-        console.error(`Skill "${skillSlug}" not found for actor "${actor.name}".`);
-        ui.notifications.error(`Skill "${skillSlug}" not found for actor "${actor.name}".`);
-        return null;
-    }
-
-    try {
-        // Construct the roll formula using the skill's total modifier
-        const roll = await actor.skills[skillSlug].roll({
-            ...rollOptions, difficultyClass: {value: dc}, // Correctly pass DC
-            flags: mergeObject(rollOptions.flags || {}, {
-                pf2e: {
-                    context: {
-                        difficultyClass: {value: dc}
-                    }
-                }
-            }, {inplace: true}) // Ensure flags are correctly set
-        });
-
-        // Determine the outcome based on the total and DC
-        const outcome = determineOutcome(roll.total, dc);
-
-        // Prepare message options
-        const messageOptions = {
-            speaker: ChatMessage.getSpeaker({
-                actor
-            }), rollMode: rollOptions.rollMode || "publicroll" // Use 'publicroll' as default unless specified
-        };
-
-        // If the roll is blind (GM only), make it secret by setting whisper to GM users
-        if (rollOptions.secret || rollOptions.rollMode === 'blindroll') {
-            messageOptions.whisper = gmUserIds; // Send the roll only to GM users
-            messageOptions.blind = true; // Mark the roll as blind
-            messageOptions.secret = true;
-            messageOptions.rollMode = 'blindroll'; // Ensure the rollMode is set to 'blindroll'
-        }
-
-        return {
-            total: roll.total, outcome: outcome, roll
-        };
-    } catch (error) {
-        console.error(`Error rolling skill ${skillSlug}:`, error);
-        ui.notifications.error(`Failed to roll skill "${skillSlug}". See console for details.`);
-        return null;
-    }
-}
-
 /**
- * Executes a perception roll for a specific actor.
+ * Executes a roll for a specific actor and roll type.
  *
- * @param {Actor} actor - The actor performing the perception roll.
+ * @param {Actor} actor - The actor performing the roll.
+ * @param {string} rollType - The type of roll ('skill', 'action', 'perception', 'save').
+ * @param {string} slug - The slug of the skill/action/save to roll.
  * @param {number} dc - The Difficulty Class (DC) for the roll.
- * @param {Object} rollOptions - Additional options for the roll, such as rollMode, secret, etc.
- * @returns {Promise<{total: number, outcome: string, roll: Roll} | null>} - The roll result containing total, outcome, and the Roll object, or null if the roll failed.
+ * @param {Object} options - Additional options for the roll.
+ * @returns {Promise<Roll>} - The resulting Roll object.
  */
-async function executePerceptionRoll(actor, dc, rollOptions) {
+async function executeRoll(actor, rollType, slug, dc, options = {}) {
     try {
-        // Use the built-in perception roll method
-        const perception = actor.perception;
-        if (!perception) {
-            throw new Error(`Perception not found for actor "${actor.name}".`);
+        let rollOptions = {...options};
+
+        // Set the DC appropriately based on roll type
+        if (['skill', 'perception', 'save'].includes(rollType)) {
+            rollOptions.dc = {value: dc};
+        } else if (rollType === 'action') {
+            rollOptions.difficultyClass = {value: dc};
         }
 
-        // Execute the perception roll using the built-in method
-        const roll = await perception.roll({
-            ...rollOptions
-        });
+        // Log the options for debugging
+        console.log(`Executing ${rollType} roll for ${slug} with options:`, rollOptions);
 
-        // Determine the outcome based on the total and DC
-        const outcome = determineOutcome(roll.total, dc);
+        let roll;
+        switch (rollType) {
+            case 'skill':
+                roll = await actor.skills[slug].roll(rollOptions);
+                break;
+            case 'action':
+                // **Token Selection Logic Start**
+                // Save current selection
+                const previousSelection = canvas.tokens.controlled;
 
-        return {
-            total: roll.total, outcome: outcome, roll
-        };
-    } catch (error) {
-        console.error(`Error rolling perception:`, error);
-        ui.notifications.error(`Failed to roll perception for "${actor.name}". See console for details.`);
-        return null;
-    }
-}
+                // Find the token for the actor on the current scene
+                const actorTokens = canvas.tokens.placeables.filter(token => token.actor && token.actor.id === actor.id);
 
-/**
- * Executes a saving throw roll for a specific actor and save type.
- *
- * @param {Actor} actor - The actor performing the saving throw.
- * @param {string} saveSlug - The save type to roll (e.g., 'fortitude', 'reflex', 'will').
- * @param {number} dc - The Difficulty Class (DC) for the saving throw.
- * @param {Object} rollOptions - Additional options for the roll, such as rollMode, secret, etc.
- * @returns {Promise<{total: number, outcome: string, roll: Roll} | null>} - The roll result containing total, outcome, and the Roll object, or null if the roll failed.
- */
-async function executeSaveRoll(actor, saveSlug, dc, rollOptions) {
-    try {
-        const roll = await actor.saves[saveSlug].roll({
-            ...rollOptions, dc: dc // Pass DC directly
-        });
-        return {total: roll.total, outcome: determineOutcome(roll.total, dc), roll};
-    } catch (error) {
-        console.error(`Error rolling save ${saveSlug}:`, error);
-        ui.notifications.error(`Failed to roll save ${saveSlug}. See console for details.`);
-        return null;
-    }
-}
-
-/**
- * Executes an action roll for a specific actor and action.
- *
- * @param {Actor} actor - The actor performing the action roll.
- * @param {string} actionSlug - The action slug to roll (e.g., 'recall-knowledge').
- * @param {string|null} variantSlug - The variant slug or statistic to use for the action (e.g., 'nature').
- * @param {number} difficultyClass - The Difficulty Class (DC) for the roll.
- * @param {Object} rollOptions - Additional options for the roll, such as traits, rollMode, secret, etc.
- * @param {string|null} selectedStatistic - The selected statistic for the action, if any.
- * @returns {Promise<{total: number, outcome: string, roll: Roll} | null>} - The roll result containing total, outcome, and the Roll object, or null if the roll failed.
- */
-async function executeActionRoll(actor, actionSlug, variantSlug, difficultyClass, rollOptions, selectedStatistic) {
-    try {
-        console.log(`Executing action roll for actor: ${actor.name}, action: "${actionSlug}", variant: "${variantSlug}", DC: ${difficultyClass}, rollOptions:`, rollOptions);
-
-        // Access the action using the PF2e API
-        const action = game.pf2e.actions.get(actionSlug);
-        if (!action) {
-            throw new Error(`Action "${actionSlug}" not found.`);
-        }
-
-        // Prepare the options object
-        const options = {};
-
-        // Include the statistic (skill or ability) to use
-        if (selectedStatistic) {
-            options.statistic = selectedStatistic;
-            console.log(`Set statistic to: "${selectedStatistic}"`);
-        } else if (variantSlug) {
-            options.statistic = variantSlug;
-            console.log(`Set statistic to variant: "${variantSlug}"`);
-        }
-
-        // **Inject difficultyClass into Top-Level Property**
-        if (difficultyClass) {
-            options.difficultyClass = {value: difficultyClass};
-            console.log(`Injected difficultyClass as top-level property: options.difficultyClass.value = ${difficultyClass}`);
-        }
-
-        // **Inject difficultyClass within Flags**
-        if (difficultyClass) {
-            options.flags = mergeObject(options.flags || {}, {
-                pf2e: {
-                    context: {
-                        difficultyClass: {
-                            value: difficultyClass
-                        }
-                    }
+                if (actorTokens.length === 0) {
+                    ui.notifications.warn(`No token found on the current scene for actor "${actor.name}". Action may not execute properly.`);
+                    console.warn(`No token found on the current scene for actor "${actor.name}".`);
+                } else {
+                    // Select the first token found
+                    const token = actorTokens[0];
+                    // Deselect others and select the actor's token
+                    canvas.tokens.releaseAll();
+                    token.control({releaseOthers: true});
                 }
-            }, {inplace: true});
-            console.log(`Injected difficultyClass within flags: options.flags.pf2e.context.difficultyClass.value = ${difficultyClass}`);
+
+                // Execute the action
+                const action = game.pf2e.actions.get(slug);
+                if (!action) throw new Error(`Action "${slug}" not found.`);
+                await action.use(rollOptions);
+
+                // Restore previous selection
+                canvas.tokens.releaseAll();
+                previousSelection.forEach(token => token.control({releaseOthers: false}));
+                // **Token Selection Logic End**
+                break;
+            case 'perception':
+                roll = await actor.perception.roll(rollOptions);
+                break;
+            case 'save':
+                roll = await actor.saves[slug].roll(rollOptions);
+                break;
+            default:
+                throw new Error(`Unsupported roll type: ${rollType}`);
         }
 
-        // Ensure traits is an array and include traits from rollOptions
-        options.traits = rollOptions.traits ? [...rollOptions.traits] : [];
-        if (rollOptions.secret) {
-            options.traits.push("secret");
-            console.log(`Added "secret" trait to options.traits`);
-        }
-
-        // Include additional options
-        if (typeof rollOptions.skipDialog !== 'undefined') {
-            options.skipDialog = rollOptions.skipDialog;
-            console.log(`Set options.skipDialog = ${rollOptions.skipDialog}`);
-        }
-        if (typeof rollOptions.createMessage !== 'undefined') {
-            options.createMessage = rollOptions.createMessage;
-            console.log(`Set options.createMessage = ${rollOptions.createMessage}`);
-        }
-
-        console.log(`Final options object before executing action.use:`, options);
-
-        // **Execute the Action Roll**
-        await action.use(options);
-        console.log(`Action "${actionSlug}" executed with options:`, options);
-
-        // **Placeholder for Roll Result**
-        // Since action.use does not return a roll, we'll return a placeholder.
-        // You may need to adjust this based on how PF2e handles action rolls.
-        const rollResult = {
-            total: actor.system.actions[actionSlug]?.totalModifier || 0, // Adjust according to actual data structure
-            outcome: determineOutcome(actor.system.actions[actionSlug]?.totalModifier || 0, difficultyClass), roll: null // Replace with actual Roll object if available
-        };
-
-        console.log(`Action roll result for "${actionSlug}":`, rollResult);
-        return rollResult;
+        return roll;
     } catch (error) {
-        console.error(`Error executing action "${actionSlug}":`, error);
-        ui.notifications.error(`Failed to execute action "${actionSlug}". See console for details.`);
+        console.error(`Error executing ${rollType} roll for ${slug}:`, error);
+        ui.notifications.error(`Failed to execute ${rollType} roll for "${slug}". See console for details.`);
         return null;
     }
 }
 
-/**
- * Determines the outcome of a roll based on the total modifier and DC.
- *
- * @param {number} totalModifier - The total modifier from the roll (including dice and bonuses).
- * @param {number} dc - The Difficulty Class (DC) to compare against.
- * @returns {string} - The outcome of the roll: 'success' or 'failure'.
- */
-function determineOutcome(totalModifier, dc) {
-    if (totalModifier >= dc) {
-        return 'success';
-    } else {
-        return 'failure';
+
+async function executeInstantRoll(selectedActors, selectedActions, dc, createMessage, skipDialog, rollMode, selectedStatistic, fromDialog = false, secret = false, additionalOptions = {}) {
+    try {
+        const isBlindRoll = rollMode === 'blindroll';
+        const isSecret = secret || isBlindRoll;
+
+        // Construct roll options
+        const rollOptions = {
+            createMessage, rollMode, secret: isSecret, skipDialog, ...additionalOptions,
+        };
+
+        for (const actor of selectedActors) {
+            for (const selectedSlug of selectedActions) {
+                const parts = selectedSlug.split(':');
+                const prefix = parts[0].toLowerCase();
+                const slug = parts[1];
+
+                // Get the specific DC for this action, if available
+                let currentDC = dc;
+                if (additionalOptions.skillDCs && additionalOptions.skillDCs[selectedSlug]) {
+                    currentDC = additionalOptions.skillDCs[selectedSlug];
+                }
+
+                // Log the DC being used
+                console.log(`Executing roll for ${actor.name}, slug: ${slug}, DC: ${currentDC}`);
+
+                // Execute the roll using the unified function
+                await executeRoll(actor, prefix, slug, currentDC, rollOptions);
+            }
+        }
+    } catch (error) {
+        console.error(`[${MODULE_NAMESPACE}] executeInstantRoll: Error:`, error);
+        ui.notifications.error('An error occurred during the instant roll. See console for details.');
     }
 }
+
+
+
+
+
+
+
+
+
+
 
 function updateRollResultUI(data) {
     const {
@@ -2562,8 +2485,10 @@ function extractActionNameFromFlavor(flavor) {
     if (strongTag) {
         // Extract text, convert to lowercase, replace spaces with hyphens for consistency
         return strongTag.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+    } else {
+        // Attempt to extract from the entire flavor text if no <strong> tag
+        return flavor.trim().toLowerCase().replace(/\s+/g, '-');
     }
-    return '';
 }
 
 /**
@@ -2589,90 +2514,6 @@ function createActionButton(name, dc, traits) {
     });
 
     return button;
-}
-
-// Function to process and replace matched text with buttons
-function processElement(element, pattern, type) {
-    function processTextNode(textNode) {
-        const textContent = textNode.nodeValue;
-        let match, lastIndex = 0;
-        const parent = textNode.parentNode;
-        pattern.lastIndex = 0;
-        let currentIndex = 0;
-        while ((match = pattern.exec(textContent)) !== null) {
-            const fullMatch = match[0];
-            let name, dc, traits;
-            if (type === 'act') {
-                name = match[1];
-                dc = match[2];
-                traits = '';
-            } else if (type === 'check') {
-                name = match[1];
-                dc = match[2];
-                traits = match[3] || '';
-            }
-
-            // Text before the match
-            const beforeText = textContent.substring(currentIndex, match.index);
-            if (beforeText) {
-                const beforeTextNode = document.createTextNode(beforeText);
-                parent.insertBefore(beforeTextNode, textNode);
-            }
-
-            // Matched text
-            const matchedTextNode = document.createTextNode(fullMatch);
-            parent.insertBefore(matchedTextNode, textNode);
-
-            // Create button
-            const buttonElement = document.createElement('button');
-            buttonElement.className = 'action-button custom-button';
-            buttonElement.title = 'Execute Action';
-            buttonElement.setAttribute('data-action-name', name);
-            buttonElement.setAttribute('data-dc', dc);
-            buttonElement.setAttribute('data-traits', traits);
-            buttonElement.innerHTML = '<i class="fas fa-dice"></i>';
-            parent.insertBefore(buttonElement, textNode);
-
-            // Attach event listener
-            const button = $(buttonElement);
-            // Attach the click handler
-            button.on('click', () => {
-                handleActionButtonClick(name, dc, traits);
-            });
-
-            // Update currentIndex and lastIndex
-            currentIndex = match.index + fullMatch.length;
-            lastIndex = pattern.lastIndex;
-        }
-
-        // Text after the last match
-        const afterText = textContent.substring(currentIndex);
-        if (afterText) {
-            const afterTextNode = document.createTextNode(afterText);
-            parent.insertBefore(afterTextNode, textNode);
-        }
-
-        // Remove original text node
-        parent.removeChild(textNode);
-    }
-
-    // Traverse child nodes recursively
-    function traverse(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-            if (pattern.test(node.nodeValue)) {
-                processTextNode(node);
-            }
-        } else {
-            let child = node.firstChild;
-            while (child) {
-                const nextSibling = child.nextSibling;
-                traverse(child);
-                child = nextSibling;
-            }
-        }
-    }
-
-    traverse(element);
 }
 
 Hooks.once('ready', () => {
@@ -2814,6 +2655,39 @@ function injectCustomButtonStyles() {
                 .custom-button .fas {
                     color: #000;
                     font-size: 1em;
+                }
+                .skill-dc-input.default-dc {
+                    color: gray;
+                    font-style: italic;
+                    width: 75px;
+                }
+                /* Add styles for .skill-dc-input */
+                .skill-dc-input {
+                    width: 75px;
+                    max-width: 75px; /* Ensure the input doesn't expand beyond this width */
+                    margin-left: 10px;
+                    flex: none; /* Prevent flex containers from stretching the input */
+                    box-sizing: border-box; /* Include padding and border in the width */
+                }
+                /* New styles for percent-chance */
+                .percent-chance {
+                    padding: 2px 5px;
+                    margin-left: 5px;
+                    margin-right: 5px;
+                    display: inline-block;
+                    vertical-align: middle;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background-color: #f0f0f0;
+                }
+                .percent-chance.low {
+                    color: red;
+                }
+                .percent-chance.medium {
+                    color: orange;
+                }
+                .percent-chance.high {
+                    color: green;
                 }
             </style>
         `);
